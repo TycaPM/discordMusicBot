@@ -36,7 +36,7 @@ ffmpeg_options = {
 }
 
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
-queue = []
+music_queue = []
 
 class YTDLSource(discord.PCMVolumeTransformer):
     def __init__(self, source, *, data, volume=0.5):
@@ -58,9 +58,9 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
 async def play_next(ctx, is_skipto=False):
     global queue_cleared_by_stop, loop_flag, current_song
-    if not queue:
+    if not music_queue:
         if not queue_cleared_by_stop:
-            await ctx.respond("Queue is empty.")
+            await ctx.respond("``𝙌𝙪𝙚𝙪𝙚 𝙞𝙨 𝙚𝙢𝙥𝙩𝙮.``")
             await bot.change_presence(status=discord.Status.idle)
         return
 
@@ -70,26 +70,26 @@ async def play_next(ctx, is_skipto=False):
     if loop_flag:
         next_song = current_song  # Play the current song again
     elif not is_skipto:
-        next_song = queue.pop(0)
+        next_song = music_queue.pop(0)
     else:
-        next_song = queue[0]
+        next_song = music_queue[0]
 
     current_player = await YTDLSource.from_url(next_song['url'], loop=bot.loop)
 
     if not ctx.voice_client.is_playing():
         current_song = next_song  # Update the currently playing song
         ctx.voice_client.play(current_player, after=lambda e: bot.loop.create_task(play_next(ctx)))
-        await ctx.respond(f"Now playing: {next_song['title']}")
-        await bot.change_presence(activity=discord.Game("Playin some tunes!"), status=discord.Status.online)
+        await ctx.respond(f"```𝙉𝙤𝙬 𝙥𝙡𝙖𝙮𝙞𝙣𝙜: \n{next_song['title']}```")
+        await bot.change_presence(activity=discord.Game(" 𝙨𝙤𝙢𝙚 𝙩𝙪𝙣𝙚𝙨!"), status=discord.Status.online)
     else:
-        print("Already playing audio, not calling play_next again.")
+        print("**Already playing audio, not calling play_next again.**")
 
-@bot.slash_command(guild_ids=[1292287390534078478])
+@bot.slash_command(guild_ids=[943279154701422613])
 async def play(ctx, *, search_terms):
-    global queue
+    global music_queue
 
     if not ctx.author.voice:
-        await ctx.respond("You need to be in a voice channel to use this command.")
+        await ctx.respond("**You need to be in a voice channel to use this command.**")
         return
 
     channel = ctx.author.voice.channel
@@ -117,129 +117,166 @@ async def play(ctx, *, search_terms):
             response = request.execute()
 
             if not response['items']:
-                await ctx.respond(f"No results found for '{term}'.")
+                await ctx.respond(f"**No results found for ``'{term}'.``**")
                 continue
 
             video_id = response['items'][0]['id']['videoId']
             video_url = f'https://www.youtube.com/watch?v={video_id}'
             video_title = response['items'][0]['snippet']['title']
         
-        queue.append({'title': video_title, 'url': video_url})
-        await ctx.respond(f"Adding song to que.")
+        music_queue.append({'title': video_title, 'url': video_url})
+        await ctx.respond(f"```+ 𝘼𝙙𝙙𝙞𝙣𝙜 𝙨𝙤𝙣𝙜 𝙩𝙤 𝙦𝙪𝙚𝙪𝙚:\n{video_title}```")
 
         if not voice_client.is_playing() and not voice_client.is_paused():
             await play_next(ctx)
-            await ctx.respond(f"Added to queue: {video_title}")
-            await bot.change_presence(activity=discord.Game("Playin some tunes!"), status=discord.Status.online)
+            await bot.change_presence(activity=discord.Game(" 𝙨𝙤𝙢𝙚 𝙩𝙪𝙣𝙚𝙨!"), status=discord.Status.online)
         else:
-            await ctx.respond(f"Added to queue: {video_title}")
-            await bot.change_presence(activity=discord.Game("Playin some tunes!"), status=discord.Status.online)
+            await bot.change_presence(activity=discord.Game(" 𝙨𝙤𝙢𝙚 𝙩𝙪𝙣𝙚𝙨!"), status=discord.Status.online)
 
-@bot.slash_command(guild_ids=[1292287390534078478])
+@bot.slash_command(guild_ids=[943279154701422613])
 async def stop(ctx):
-    global queue_cleared_by_stop, queue
+    global queue_cleared_by_stop, music_queue
     if ctx.voice_client and ctx.voice_client.is_playing():
         ctx.voice_client.stop()
-    queue.clear()
+    music_queue.clear()
     queue_cleared_by_stop = True
-    await ctx.respond("Stopped playing music and cleared the queue.")
+    await ctx.respond("``𝙎𝙩𝙤𝙥𝙥𝙚𝙙 𝙥𝙡𝙖𝙮𝙞𝙣𝙜 𝙢𝙪𝙨𝙞𝙘 𝙖𝙣𝙙 𝙘𝙡𝙚𝙖𝙧𝙚𝙙 𝙩𝙝𝙚 𝙦𝙪𝙚𝙪𝙚.``")
     await bot.change_presence(status=discord.Status.idle)
     await ctx.voice_client.disconnect()
 
-@bot.slash_command(guild_ids=[1292287390534078478])
+@bot.slash_command(guild_ids=[943279154701422613])
 async def skipto(ctx, song_number: int):
-    global queue, skipto_in_progress
+    global music_queue, skipto_in_progress
 
     if not ctx.voice_client or not ctx.voice_client.is_playing():
-        await ctx.respond("There is no audio currently playing.")
+        await ctx.respond("``𝙏𝙝𝙚𝙧𝙚 𝙞𝙨 𝙣𝙤 𝙖𝙪𝙙𝙞𝙤 𝙘𝙪𝙧𝙧𝙚𝙣𝙩𝙡𝙮 𝙥𝙡𝙖𝙮𝙞𝙣𝙜.``")
         return
 
-    if song_number < 1 or song_number > len(queue):
-        await ctx.respond(f"Invalid song number. Please choose a number between 1 and {len(queue)}.")
+    if song_number < 1 or song_number > len(music_queue):
+        await ctx.respond(f"```𝙄𝙣𝙫𝙖𝙡𝙞𝙙 𝙨𝙤𝙣𝙜 𝙣𝙪𝙢𝙗𝙚𝙧. \nPlease choose a number between [1 and {len(music_queue)}].```")
         return
 
     skipto_in_progress = True
-    song_index = song_number - 1
-    song_to_play = queue[song_index]
-
-    print(f"Queue before skipto: {queue}")
-    print(f"Skipping to index: {song_index}, Song to play: {song_to_play}")
+    song_index = song_number 
+    song_to_play = music_queue[song_index - 1]
 
     ctx.voice_client.stop()
 
-    if queue:
-        song_to_duplicate = queue[0]
-        queue.insert(0, {'title': song_to_duplicate['title'], 'url': song_to_duplicate['url']})
+    if music_queue:
+        song_to_duplicate = music_queue[0]
+        music_queue.insert(0, {'title': song_to_duplicate['title'], 'url': song_to_duplicate['url']})
 
-    del queue[song_index]
+    del music_queue[song_index]
     current_player = await YTDLSource.from_url(song_to_play['url'], loop=bot.loop)
     
     ctx.voice_client.play(current_player, after=lambda e: bot.loop.create_task(play_next(ctx, is_skipto=True)))
-    await ctx.respond(f"Skipped to: {song_to_play['title']} and removed it from the queue. Duplicated the previous song and added it to the front of the queue.")
+    await ctx.respond(f"```𝙎𝙠𝙞𝙥𝙥𝙚𝙙 𝙩𝙤: {song_to_play['title']} \n𝙖𝙙𝙣 𝙧𝙚𝙢𝙤𝙫𝙚𝙙 𝙞𝙩 𝙛𝙧𝙤𝙢 𝙩𝙝𝙚 𝙦𝙪𝙚𝙪𝙚.```")
     skipto_in_progress = False
 
-@bot.slash_command(guild_ids=[1292287390534078478])
-async def que(ctx):
-    if not queue:
-        await ctx.respond("The queue is currently empty.")
+@bot.slash_command(guild_ids=[943279154701422613])
+async def queue(ctx):
+    if not music_queue:
+        await ctx.respond("``𝙏𝙝𝙚 𝙦𝙪𝙚𝙪𝙚 𝙞𝙨 𝙘𝙪𝙧𝙧𝙚𝙣𝙩𝙡𝙮 𝙚𝙢𝙥𝙩𝙮.``")
         return
 
-    current_song = ctx.voice_client.source.title if ctx.voice_client.is_playing() else "No song currently playing"
+    current_song = ctx.voice_client.source.title if ctx.voice_client.is_playing() else "𝙉𝙤 𝙨𝙤𝙣𝙜 𝙘𝙪𝙧𝙧𝙚𝙣𝙩𝙡𝙮 𝙥𝙡𝙖𝙮𝙞𝙣𝙜."
     
-    queue_list = "\n".join(f"{i+1}. {song['title']}" for i, song in enumerate(queue))
-    await ctx.respond(f"Currently playing: {current_song}\n\nCurrent queue:\n{queue_list}")
+    queue_list = "\n".join(f"{i+1}. {song['title']}" for i, song in enumerate(music_queue))
+    await ctx.respond(f"```𝘾𝙪𝙧𝙧𝙚𝙣𝙩𝙡𝙮 𝙥𝙡𝙖𝙮𝙞𝙣𝙜: {current_song}\n\n𝘾𝙪𝙧𝙧𝙚𝙣𝙩 𝙦𝙪𝙚𝙪𝙚:\n{queue_list}```")
 
-@bot.slash_command(guild_ids=[1292287390534078478])
+@bot.slash_command(guild_ids=[943279154701422613])
 async def remove(ctx, index: int):
-    if 0 < index <= len(queue):
-        removed_song = queue.pop(index - 1)
-        await ctx.respond(f"Removed {removed_song['title']} from the queue.")
+    if 0 < index <= len(music_queue):
+        removed_song = music_queue.pop(index - 1)
+        await ctx.respond(f"```𝙍𝙚𝙢𝙤𝙫𝙚𝙙: {removed_song['title']} 𝙛𝙧𝙤𝙢 𝙩𝙝𝙚 𝙦𝙪𝙚𝙪𝙚.```")
     else:
-        await ctx.respond("Invalid song number.")
+        await ctx.respond("``𝙄𝙣𝙫𝙖𝙡𝙞𝙙 𝙨𝙤𝙣𝙜 𝙣𝙪𝙢𝙗𝙚𝙧.``")
 
-@bot.slash_command(guild_ids=[1292287390534078478])
+@bot.slash_command(guild_ids=[943279154701422613])
 async def skip(ctx):
     if not ctx.voice_client or not ctx.voice_client.is_playing():
-        await ctx.respond("There is no audio currently playing.")
+        await ctx.respond("``𝙏𝙝𝙚𝙧𝙚 𝙞𝙨 𝙣𝙤 𝙖𝙪𝙙𝙞𝙤 𝙘𝙪𝙧𝙧𝙚𝙣𝙩𝙡𝙮 𝙥𝙡𝙖𝙮𝙞𝙣𝙜.``")
         return
 
     ctx.voice_client.stop()
 
-    if len(queue) == 0:
-        await ctx.respond("Queue is empty.")
+    if len(music_queue) == 0:
+        await ctx.respond("``𝙌𝙪𝙚𝙪𝙚 𝙞𝙨 𝙚𝙢𝙥𝙩𝙮.``")
         return
 
     await play_next(ctx)
 
-@bot.slash_command(guild_ids=[1292287390534078478])
+@bot.slash_command(guild_ids=[943279154701422613])
 async def pause(ctx):
     if ctx.voice_client.is_playing():
-        ctx.voice_client.pause()
-        await ctx.respond(f"Paused the music.")
-    else:
-        await ctx.respond("No song is currently playing.")
+        source = ctx.voice_client.source
+        if isinstance(source, discord.PCMVolumeTransformer):
+            fade_duration = 0.25
+            fade_steps = 10
+            step_duration = fade_duration / fade_steps
+            volume_step = source.volume / fade_steps
 
-@bot.slash_command(guild_ids=[1292287390534078478])
+            for _ in range(fade_steps):
+                source.volume = max(0, source.volume - volume_step)
+                await asyncio.sleep(step_duration)
+
+            source.volume = 0
+        
+        ctx.voice_client.pause()
+        await ctx.respond("``𝙈𝙪𝙨𝙞𝙘 𝙝𝙖𝙨 𝙥𝙖𝙪𝙨𝙚𝙙.``")
+    else:
+        await ctx.respond("``𝙉𝙤 𝙨𝙤𝙣𝙜 𝙞𝙨 𝙘𝙪𝙧𝙧𝙚𝙣𝙩𝙡𝙮 𝙥𝙡𝙖𝙮𝙞𝙣𝙜.``")
+
+@bot.slash_command(guild_ids=[943279154701422613])
 async def resume(ctx):
     if ctx.voice_client.is_paused():
         ctx.voice_client.resume()
-        await ctx.respond("Resumed the music.")
+        source = ctx.voice_client.source
+        if isinstance(source, discord.PCMVolumeTransformer):
+            fade_duration = 0.25
+            fade_steps = 10
+            step_duration = fade_duration / fade_steps
+            volume_step = 0.5 / fade_steps
+
+            source.volume = 0
+
+            for _ in range(fade_steps):
+                source.volume = min(0.5, source.volume + volume_step)
+                await asyncio.sleep(step_duration)
+        await ctx.respond("``𝙈𝙪𝙨𝙞𝙘 𝙝𝙖𝙨 𝙧𝙚𝙨𝙪𝙢𝙚𝙙.``")
     else:
-        await ctx.respond("The music is not paused.")
+        await ctx.respond("``𝙉𝙤 𝙢𝙪𝙨𝙞𝙘 𝙞𝙨 𝙘𝙪𝙧𝙧𝙚𝙣𝙩𝙡𝙮 𝙥𝙖𝙪𝙨𝙚𝙙.``")
 
-@bot.slash_command(guild_ids=[1292287390534078478])
-async def loop(ctx):
-    global loop_flag, current_song
+@bot.slash_command(guild_ids=[943279154701422613])
+async def help(ctx):
+    help_text = """
+    **Music Bot Commands:**
+    
+    `/play <youtube link>` - Plays audio from url(s). Can take multiple urls seperated with ","s
+    `/stop` - Stops the current song, clears the queue, and disconnects the bot from the voice channel.
+    `/skipto <song_number>` - Skips to a specific song in the queue and removes that song from the queue.
+    `/queue` - Displays the current queue and the song currently playing.
+    `/remove <song number>` - Removes a song from the queue based on its position.
+    `/skip` - Skips the currently playing song and plays the next song in the queue.
+    `/pause` - Pauses the currently playing music.
+    `/resume` - Resumes from where the song was paused.
+    """
+    
+    await ctx.respond(help_text)
 
-    if not ctx.voice_client or not ctx.voice_client.is_playing():
-        await ctx.respond("There is no song currently playing to loop.")
-        return
+# @bot.slash_command(guild_ids=[943279154701422613])
+# async def loop(ctx):
+#     global loop_flag, current_song
 
-    loop_flag = not loop_flag
+#     if not ctx.voice_client or not ctx.voice_client.is_playing():
+#         await ctx.respond("There is no song currently playing to loop.")
+#         return
 
-    if loop_flag:
-        await ctx.respond(f"Looping: {current_song['title']}")
-    else:
-        await ctx.respond("Looping disabled.")
+#     loop_flag = not loop_flag
+
+#     if loop_flag:
+#         await ctx.respond(f"Looping: {current_song['title']}")
+#     else:
+#         await ctx.respond("Looping disabled.")
 
 bot.run(TOKEN)

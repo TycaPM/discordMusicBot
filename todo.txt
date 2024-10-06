@@ -1,0 +1,7 @@
+1. [Done] Fix queue bug resulting from skipto command
+2. Fix/add loop feature
+3. Reorganize hierarchy
+4. [Done] Keep doing QC
+5. Look into skip/remove removing too many songs from que
+6. Convert play to resume music and add play's functionality to queue if theres a link after
+7. [Done] Fix multilink additions not working
