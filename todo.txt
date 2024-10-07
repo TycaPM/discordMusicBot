@@ -1,7 +1,18 @@
 1. [Done] Fix queue bug resulting from skipto command
 2. Fix/add loop feature
-3. Reorganize hierarchy
+3. [Done] Reorganize hierarchy
 4. [Done] Keep doing QC
 5. Look into skip/remove removing too many songs from que
 6. Convert play to resume music and add play's functionality to queue if theres a link after
 7. [Done] Fix multilink additions not working
+8. Possible spotify integration 
+9. Command volume control for whole vc
+10. Improve youtube search feature and investigate youtube music functionality
+11. Add multiserver functionality
+12. Add Async response handling to avoid discord timeouts
+13. Add VC status disconnection checks
+14. Cut redundant status augmentation
+15. Clean up the code in play, play_next, and skipto
+16. Add the option to add youtube playlists
+17. Add edge case youtube links and error handling
+18. [Done] Improved youtube api integration performance and tweaked ffmpeg settings
