@@ -71,15 +71,17 @@ async def play_next(ctx, is_skipto=False):
     global queue_cleared_by_stop, loop_flag, current_song
     if not music_queue:
         if not queue_cleared_by_stop:
-            await ctx.respond("``𝙌𝙪𝙚𝙪𝙚 𝙞𝙨 𝙚𝙢𝙥𝙩𝙮.``")
+            if not ctx.interaction.response.is_done():
+                await ctx.respond("``𝙌𝙪𝙚𝙪𝙚 𝙞𝙨 𝙚𝙢𝙥𝙩𝙮.``")
+            else:
+                await ctx.send_followup("``𝙌𝙪𝙚𝙪𝙚 𝙞𝙨 𝙚𝙢𝙥𝙩𝙮.``")
             await bot.change_presence(status=discord.Status.idle, activity=discord.Game("Just chillin :3"))
         return
 
     queue_cleared_by_stop = False
 
-    # If loop is enabled, replay the current song
     if loop_flag:
-        next_song = current_song  # Play the current song again
+        next_song = current_song
     elif not is_skipto:
         next_song = music_queue.pop(0)
     else:
@@ -90,7 +92,10 @@ async def play_next(ctx, is_skipto=False):
     if not ctx.voice_client.is_playing():
         current_song = next_song  # Update the currently playing song
         ctx.voice_client.play(current_player, after=lambda e: bot.loop.create_task(play_next(ctx)))
-        await ctx.respond(f"```𝙉𝙤𝙬 𝙥𝙡𝙖𝙮𝙞𝙣𝙜: \n{next_song['title']}```")
+        if not ctx.interaction.response.is_done():
+            await ctx.respond(f"```𝙉𝙤𝙬 𝙥𝙡𝙖𝙮𝙞𝙣𝙜: \n{next_song['title']}```")
+        else:
+            await ctx.send_followup(f"```𝙉𝙤𝙬 𝙥𝙡𝙖𝙮𝙞𝙣𝙜: \n{next_song['title']}```")
         await bot.change_presence(activity=discord.Game(" 𝙨𝙤𝙢𝙚 𝙩𝙪𝙣𝙚𝙨!"), status=discord.Status.online)
     else:
         print("**Already playing audio, not calling play_next again.**")
@@ -240,7 +245,7 @@ async def skipto(ctx, song_number: int):
     skipto_in_progress = False
 
 @bot.slash_command()
-async def stop(ctx):
+async def leave(ctx):
     global queue_cleared_by_stop, music_queue
     if ctx.voice_client and ctx.voice_client.is_playing():
         ctx.voice_client.stop()
