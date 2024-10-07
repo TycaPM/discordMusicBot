@@ -16,3 +16,6 @@
 16. Add the option to add youtube playlists
 17. Add edge case youtube links and error handling
 18. [Done] Improved youtube api integration performance and tweaked ffmpeg settings
+19. Add ability to play discord video audio through bot
+20. Potentially add youtube video downloading functionality
+
