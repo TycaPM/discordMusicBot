@@ -13,7 +13,7 @@ YT_API_KEY = os.getenv('YT_API_KEY')
 intents = discord.Intents.default()
 intents.message_content = True
 
-queue_cleared_by_stop = False
+queue_cleared_by_leave = False
 loop_flag = False
 current_song = None 
 skipto_in_progress = False
@@ -68,9 +68,9 @@ class YTDLSource(discord.PCMVolumeTransformer):
         return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
 
 async def play_next(ctx, is_skipto=False):
-    global queue_cleared_by_stop, loop_flag, current_song
+    global queue_cleared_by_leave, loop_flag, current_song
     if not music_queue:
-        if not queue_cleared_by_stop:
+        if not queue_cleared_by_leave:
             if not ctx.interaction.response.is_done():
                 await ctx.respond("``𝙌𝙪𝙚𝙪𝙚 𝙞𝙨 𝙚𝙢𝙥𝙩𝙮.``")
             else:
@@ -78,7 +78,7 @@ async def play_next(ctx, is_skipto=False):
             await bot.change_presence(status=discord.Status.idle, activity=discord.Game("Just chillin :3"))
         return
 
-    queue_cleared_by_stop = False
+    queue_cleared_by_leave = False
 
     if loop_flag:
         next_song = current_song
@@ -108,6 +108,7 @@ async def play(ctx, *, search_terms):
         await ctx.respond("**You need to be in a voice channel to use this command.**")
         return
 
+    user = ctx.user.name
     channel = ctx.author.voice.channel
 
     if ctx.voice_client is None:
@@ -116,6 +117,7 @@ async def play(ctx, *, search_terms):
         voice_client = ctx.voice_client
 
     search_terms_list = [term.strip() for term in search_terms.split(',')]
+    response_messages = []
 
     for term in search_terms_list:
         if term.startswith("http"):
@@ -133,7 +135,7 @@ async def play(ctx, *, search_terms):
             response = request.execute()
 
             if not response['items']:
-                await ctx.respond(f"**No results found for ``'{term}'.``**")
+                response_messages.append(f"**No results found for ``'{term}'.``**")
                 continue
 
             video_id = response['items'][0]['id']['videoId']
@@ -141,7 +143,12 @@ async def play(ctx, *, search_terms):
             video_title = response['items'][0]['snippet']['title']
         
         music_queue.append({'title': video_title, 'url': video_url})
-        await ctx.respond(f"```+ 𝘼𝙙𝙙𝙞𝙣𝙜 𝙨𝙤𝙣𝙜 𝙩𝙤 𝙦𝙪𝙚𝙪𝙚:\n{video_title}```")
+        response_messages.append(f"```+ 𝘼𝙙𝙙𝙞𝙣𝙜 𝙨𝙤𝙣𝙜 𝙩𝙤 𝙦𝙪𝙚𝙪𝙚:\n{video_title}```")
+
+        print(f"{user} played {video_title}\n")
+
+        if response_messages:
+            await ctx.respond("\n".join(response_messages))
 
         if not voice_client.is_playing() and not voice_client.is_paused():
             await play_next(ctx)
@@ -244,13 +251,13 @@ async def skipto(ctx, song_number: int):
     await ctx.respond(f"```𝙎𝙠𝙞𝙥𝙥𝙚𝙙 𝙩𝙤: {song_to_play['title']} \n𝙖𝙣𝙙 𝙧𝙚𝙢𝙤𝙫𝙚𝙙 𝙞𝙩 𝙛𝙧𝙤𝙢 𝙩𝙝𝙚 𝙦𝙪𝙚𝙪𝙚.```")
     skipto_in_progress = False
 
-@bot.slash_command()
+@bot.slash_command(guild_ids=[943279154701422613])
 async def leave(ctx):
-    global queue_cleared_by_stop, music_queue
+    global queue_cleared_by_leave, music_queue
     if ctx.voice_client and ctx.voice_client.is_playing():
         ctx.voice_client.stop()
     music_queue.clear()
-    queue_cleared_by_stop = True
+    queue_cleared_by_leave = True
     await ctx.respond("``𝙎𝙩𝙤𝙥𝙥𝙚𝙙 𝙥𝙡𝙖𝙮𝙞𝙣𝙜 𝙢𝙪𝙨𝙞𝙘 𝙖𝙣𝙙 𝙘𝙡𝙚𝙖𝙧𝙚𝙙 𝙩𝙝𝙚 𝙦𝙪𝙚𝙪𝙚.``")
     await bot.change_presence(status=discord.Status.idle, activity=discord.Game("Just chillin :3"))
     await ctx.voice_client.disconnect()
@@ -269,7 +276,7 @@ async def help(ctx):
     **Music Bot Commands:**
     
     `/play <youtube link>` - Plays audio from url(s). Can take multiple urls seperated with ","s
-    `/stop` - Stops the current song, clears the queue, and disconnects the bot from the voice channel.
+    `/leave` - Stops the current song, clears the queue, and disconnects the bot from the voice channel.
     `/skipto <song_number>` - Skips to a specific song in the queue and removes that song from the queue.
     `/queue` - Displays the current queue and the song currently playing.
     `/remove <song number>` - Removes a song from the queue based on its position.
